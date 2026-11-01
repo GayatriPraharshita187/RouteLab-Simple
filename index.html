@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RouteLab-Simple | Interactive Network Routing Visualizer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Cytoscape.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+</head>
+
+<body>
+    <!-- ============ NAVIGATION ============ -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#home" class="nav-brand">
+                <span class="nav-brand-icon">&#9881;</span>
+                RouteLab<span class="nav-brand-accent">-Simple</span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#home" class="nav-link active">Home</a></li>
+                <li><a href="#builder" class="nav-link">Network Builder</a></li>
+                <li><a href="#algorithms" class="nav-link">Routing Algorithms</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ============ HOME / HERO ============ -->
+    <section id="home" class="section hero-section">
+        <div class="hero-content">
+            <div class="hero-badge">Computer Networks &middot; Educational Simulator</div>
+            <h1 class="hero-title">Interactive Network Routing Visualizer</h1>
+            <p class="hero-intro">
+                RouteLab-Simple is an educational simulator for exploring how data
+                packets find their way across computer networks. Build custom
+                topologies, run seven classic routing algorithms, and watch
+                paths form in real time on an interactive canvas powered by
+                Cytoscape.js.
+            </p>
+            <a href="#builder" class="btn btn-primary btn-lg">Explore Simulator &rarr;</a>
+        </div>
+
+        <!-- Seven algorithm cards -->
+        <div class="algo-cards-grid">
+            <a href="#algo-dijkstra" class="algo-card">
+                <div class="algo-card-number">01</div>
+                <h3 class="algo-card-title">Shortest Path Routing</h3>
+                <p class="algo-card-desc">Dijkstra's algorithm finds the least-cost path from a source to all other
+                    routers.</p>
+            </a>
+            <a href="#algo-flooding" class="algo-card">
+                <div class="algo-card-number">02</div>
+                <h3 class="algo-card-title">Flooding</h3>
+                <p class="algo-card-desc">Every incoming packet is forwarded on all outgoing links except the arrival
+                    link.</p>
+            </a>
+            <a href="#algo-distance-vector" class="algo-card">
+                <div class="algo-card-number">03</div>
+                <h3 class="algo-card-title">Distance Vector Routing</h3>
+                <p class="algo-card-desc">Routers exchange distance vectors with neighbors using the Bellman-Ford
+                    equation.</p>
+            </a>
+            <a href="#algo-link-state" class="algo-card">
+                <div class="algo-card-number">04</div>
+                <h3 class="algo-card-title">Link State Routing</h3>
+                <p class="algo-card-desc">Each router floods its link-state to all nodes, then runs Dijkstra on the full
+                    map.</p>
+            </a>
+            <a href="#algo-hierarchical" class="algo-card">
+                <div class="algo-card-number">05</div>
+                <h3 class="algo-card-title">Hierarchical Routing</h3>
+                <p class="algo-card-desc">Routers are grouped into regions; routing decisions happen at multiple levels.
+                </p>
+            </a>
+            <a href="#algo-broadcast" class="algo-card">
+                <div class="algo-card-number">06</div>
+                <h3 class="algo-card-title">Broadcast Routing</h3>
+                <p class="algo-card-desc">A packet is delivered to every router in the network via flooding or spanning
+                    trees.</p>
+            </a>
+            <a href="#algo-multicast" class="algo-card">
+                <div class="algo-card-number">07</div>
+                <h3 class="algo-card-title">Multicast Routing</h3>
+                <p class="algo-card-desc">Packets are delivered to a specific subset of routers using shared trees or
+                    source-based trees.</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- ============ NETWORK BUILDER ============ -->
+    <section id="builder" class="section builder-section">
+        <div class="section-header">
+            <h2 class="section-title">Network Builder</h2>
+            <p class="section-subtitle">Design your network topology by adding routers and connecting them with weighted
+                links.</p>
+        </div>
+
+        <div class="builder-layout">
+            <!-- Controls panel -->
+            <div class="builder-controls">
+                <div class="control-group">
+                    <h3 class="control-group-title">Routers</h3>
+                    <button class="btn btn-primary btn-block" id="btnAddRouter">+ Add Router</button>
+                    <button class="btn btn-secondary btn-block" id="btnDeleteRouter">Delete Router</button>
+                </div>
+                <div class="control-group">
+                    <h3 class="control-group-title">Links</h3>
+                    <button class="btn btn-secondary btn-block" id="btnConnectRouters">Connect Routers</button>
+                    <label class="control-label" for="linkCostInput">Link Cost</label>
+                    <input type="number" id="linkCostInput" class="control-input" value="1" min="1" max="99">
+                    <button class="btn btn-secondary btn-block" id="btnDeleteLink">Delete Link</button>
+                    <button class="btn btn-secondary btn-block" id="btnEditCost">Edit Link Cost</button>
+                </div>
+                <div class="control-group">
+                    <h3 class="control-group-title">Path Selection</h3>
+                    <label class="control-label" for="sourceRouterSelect">Source Router</label>
+                    <select id="sourceRouterSelect" class="control-select">
+                        <option value="">-- Select --</option>
+                    </select>
+                    <label class="control-label" for="destRouterSelect">Destination Router</label>
+                    <select id="destRouterSelect" class="control-select">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <h3 class="control-group-title">Canvas</h3>
+                    <button class="btn btn-secondary btn-block" id="btnFitView">Fit to View</button>
+                </div>
+                <div class="control-group">
+                    <h3 class="control-group-title">Sample Networks</h3>
+                    <label class="control-label" for="sampleNetworkSelect">Load Sample</label>
+                    <select id="sampleNetworkSelect" class="control-select">
+                        <option value="">-- Select --</option>
+                        <option value="linear">Linear Chain (5 nodes)</option>
+                        <option value="mesh">Mesh Network (6 nodes)</option>
+                        <option value="star">Star Topology (5 nodes)</option>
+                        <option value="ring">Ring Topology (6 nodes)</option>
+                        <option value="hierarchical">Hierarchical (8 nodes)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button class="btn btn-danger btn-block" id="btnResetNetwork">Reset Network</button>
+                </div>
+            </div>
+
+            <!-- Cytoscape canvas -->
+            <div class="builder-canvas-wrapper">
+                <div id="cyCanvas" class="builder-canvas"></div>
+                <div class="canvas-hint" id="canvasHint">
+                    Click "Add Router" to begin building your network. Use "Connect Routers" to link nodes.
+                </div>
+                <div class="network-stats" id="networkStats">
+                    <span class="stat-item">Routers: <strong id="statRouters">0</strong></span>
+                    <span class="stat-item">Links: <strong id="statLinks">0</strong></span>
+                    <span class="stat-item">Source: <strong id="statSource">None</strong></span>
+                    <span class="stat-item">Dest: <strong id="statDest">None</strong></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ ROUTING ALGORITHMS ============ -->
+    <section id="algorithms" class="section algorithms-section">
+        <div class="section-header">
+            <h2 class="section-title">Routing Algorithms</h2>
+            <p class="section-subtitle">Seven fundamental routing algorithms explained and visualized.</p>
+        </div>
+
+        <!-- 01: Dijkstra -->
+        <div id="algo-dijkstra" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 01</div>
+                <h3 class="algo-name">Shortest Path Routing (Dijkstra)</h3>
+                <p class="algo-desc">Finds the shortest path from a source router to all other routers using Dijkstra's
+                    algorithm.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>Initialize all router distances to infinity except the source (distance 0).</li>
+                        <li>Select the unvisited router with the smallest known distance.</li>
+                        <li>Relax all outgoing edges: if a shorter path is found, update the distance.</li>
+                        <li>Mark the router as visited and repeat until all routers are processed.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizDijkstra" class="algo-viz-canvas"></div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('dijkstra')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('dijkstra')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsDijkstra">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 02: Flooding -->
+        <div id="algo-flooding" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 02</div>
+                <h3 class="algo-name">Flooding</h3>
+                <p class="algo-desc">Every incoming packet is sent out on all outgoing links except the one it arrived
+                    on.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>A source router sends the packet to all its neighbors.</li>
+                        <li>Each receiving router forwards the packet on all links except the incoming link.</li>
+                        <li>A hop counter (TTL) prevents packets from circulating forever.</li>
+                        <li>Every router in the network is guaranteed to receive the packet.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizFlooding" class="algo-viz-canvas"></div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('flooding')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('flooding')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsFlooding">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 03: Distance Vector -->
+        <div id="algo-distance-vector" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 03</div>
+                <h3 class="algo-name">Distance Vector Routing</h3>
+                <p class="algo-desc">Routers periodically share their distance vectors with neighbors and update using
+                    Bellman-Ford.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>Each router maintains a distance vector with its best known cost to every destination.</li>
+                        <li>Routers exchange vectors with their direct neighbors periodically.</li>
+                        <li>On receiving a neighbor's vector, a router applies the Bellman-Ford equation: D(i,j) =
+                            min[D(i,j), c(i,k) + D(k,j)].</li>
+                        <li>Vectors converge to shortest paths after several rounds of exchange.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizDistanceVector" class="algo-viz-canvas"></div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('distance-vector')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('distance-vector')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsDistanceVector">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 04: Link State -->
+        <div id="algo-link-state" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 04</div>
+                <h3 class="algo-name">Link State Routing</h3>
+                <p class="algo-desc">Each router floods its link-state information, then computes shortest paths with
+                    Dijkstra.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>Each router discovers its neighbors and measures link costs.</li>
+                        <li>The router constructs a link-state packet (LSP) describing its links.</li>
+                        <li>LSPs are flooded to every other router in the network.</li>
+                        <li>Each router builds the full topology map and runs Dijkstra to find shortest paths.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizLinkState" class="algo-viz-canvas"></div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('link-state')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('link-state')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsLinkState">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 05: Hierarchical -->
+        <div id="algo-hierarchical" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 05</div>
+                <h3 class="algo-name">Hierarchical Routing</h3>
+                <p class="algo-desc">Routers are organized into regions; routing happens at both intra-region and
+                    inter-region levels.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>Network is partitioned into regions, each managed by a designated router.</li>
+                        <li>Intra-region routing uses a standard algorithm within each region.</li>
+                        <li>Inter-region routing forwards packets between region gateways.</li>
+                        <li>This reduces the size of routing tables and control overhead in large networks.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizHierarchical" class="algo-viz-canvas"></div>
+                <div class="algo-extra-controls">
+                    <label class="algo-control-label" for="areaCountSelect">Number of Areas:</label>
+                    <select id="areaCountSelect" class="algo-control-select">
+                        <option value="2">2 Areas</option>
+                        <option value="3" selected>3 Areas</option>
+                        <option value="4">4 Areas</option>
+                    </select>
+                </div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('hierarchical')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('hierarchical')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsHierarchical">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 06: Broadcast -->
+        <div id="algo-broadcast" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 06</div>
+                <h3 class="algo-name">Broadcast Routing</h3>
+                <p class="algo-desc">Delivers packets to every router in the network using flooding or a broadcast
+                    spanning tree.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>Flooding approach: each router forwards the packet on all links except the incoming one.
+                        </li>
+                        <li>Spanning tree approach: a tree is computed from the source so each router receives one copy.
+                        </li>
+                        <li>Reverse path forwarding checks if the packet arrived on the expected link before forwarding.
+                        </li>
+                        <li>Ensures all routers receive the broadcast while minimizing redundant traffic.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizBroadcast" class="algo-viz-canvas"></div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('broadcast')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('broadcast')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsBroadcast">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 07: Multicast -->
+        <div id="algo-multicast" class="algo-section">
+            <div class="algo-info">
+                <div class="algo-tag">Algorithm 07</div>
+                <h3 class="algo-name">Multicast Routing</h3>
+                <p class="algo-desc">Packets are delivered to a specific group of routers using shared trees or
+                    source-based trees.</p>
+                <div class="algo-how">
+                    <h4>How it works</h4>
+                    <ol>
+                        <li>Multicast group members register their interest in receiving packets for a group.</li>
+                        <li>Shared tree approach: a single tree rooted at a rendezvous point serves all sources.</li>
+                        <li>Source-based tree approach: a separate shortest-path tree is built per source.</li>
+                        <li>Packets traverse only the branches leading to group members, saving bandwidth.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="algo-viz">
+                <div id="vizMulticast" class="algo-viz-canvas"></div>
+                <div class="algo-extra-controls">
+                    <label class="algo-control-label" for="multicastGroupSelect">Group Members (Ctrl+click):</label>
+                    <select id="multicastGroupSelect" class="algo-control-select" multiple size="5"></select>
+                </div>
+                <div class="algo-controls">
+                    <button class="btn btn-primary" onclick="runAlgorithm('multicast')">Run Simulation</button>
+                    <button class="btn btn-secondary" onclick="resetAlgorithm('multicast')">Reset</button>
+                </div>
+                <div class="algo-results" id="resultsMulticast">
+                    <p class="results-placeholder">Results will appear here after running the simulation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="section about-section">
+        <div class="section-header">
+            <h2 class="section-title">About RouteLab-Simple</h2>
+        </div>
+        <div class="about-content">
+            <p>
+                RouteLab-Simple is an educational simulator designed for students
+                and enthusiasts of Computer Networks. It demonstrates seven
+                fundamental routing algorithms through interactive visualization,
+                helping you understand how packets traverse a network from
+                source to destination.
+            </p>
+            <p>
+                The simulator uses Cytoscape.js for graph rendering and runs
+                entirely in the browser with vanilla JavaScript. No backend,
+                no build tools, no dependencies to install &mdash; just open
+                <code>index.html</code> and start exploring.
+            </p>
+            <h3 class="about-subtitle">Routing Algorithms Covered</h3>
+            <ul class="about-list">
+                <li><strong>Shortest Path (Dijkstra)</strong> &mdash; least-cost path computation</li>
+                <li><strong>Flooding</strong> &mdash; packet diffusion to all nodes</li>
+                <li><strong>Distance Vector</strong> &mdash; distributed Bellman-Ford</li>
+                <li><strong>Link State</strong> &mdash; full topology with Dijkstra</li>
+                <li><strong>Hierarchical</strong> &mdash; multi-level region routing</li>
+                <li><strong>Broadcast</strong> &mdash; network-wide delivery</li>
+                <li><strong>Multicast</strong> &mdash; group-targeted delivery</li>
+            </ul>
+            <h3 class="about-subtitle">Technology Stack</h3>
+            <ul class="about-list">
+                <li>HTML5 &amp; CSS3</li>
+                <li>Vanilla JavaScript (ES6+)</li>
+                <li>Cytoscape.js (graph visualization via CDN)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2026 RouteLab-Simple &mdash; Educational Computer Networks Simulator</p>
+        </div>
+    </footer>
+
+    <!-- ============ SCRIPTS ============ -->
+    <script src="js/app.js"></script>
+    <script src="js/network.js"></script>
+    <script src="js/algorithms.js"></script>
+</body>
+
+</html>
